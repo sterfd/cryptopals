@@ -37,8 +37,7 @@ hp_freq = {
     "q": 0.001,
 }
 
-from s1_c123_redone import frequency_kl_scoring, space_scoring, vowel_scoring
-import heapq
+from s1_c123_redone import frequency_kl_scoring
 
 
 def xor_key(entry, key):
@@ -47,29 +46,23 @@ def xor_key(entry, key):
 
     # KL_divergence scoring
     score = frequency_kl_scoring(decoded_bytes)
-
-    # score = space_scoring(decoded_bytes)
-
-    # score = vowel_scoring(decoded_bytes)
-    if len(best_scores) > 10:
-        heapq.heappushpop(best_scores, (-score, key, entry, decoded_bytes))
-    else:
-        heapq.heappush(best_scores, (-score, key, entry, decoded_bytes))
+    all_scores.append((score, key, decoded_bytes))
 
 
 def test_message(message):
-    for i in range(48, 123):
+    for i in range(0, 255):
         xor_key(message, i)
 
 
-best_scores = []
+all_scores = []
 f = open("c4.txt", "r")
 for line in f.readlines():
     test_message(line)
 
-for score, key, _, decoded_bytes in sorted(best_scores, reverse=True):
-    print(-score, key, decoded_bytes)
+for score, key, decoded_bytes in sorted(all_scores, reverse=True):
+    print(score, key, decoded_bytes)
 
+print("\nThe decoded string is", min(all_scores)[2])
 
 # vowels scoring didn't work
 # KL_divergence and space scoring worked great

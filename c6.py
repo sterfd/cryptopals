@@ -9,13 +9,28 @@
 # Here's how:
 
 import base64
-import heapq
 from s1_c123_redone import vowel_scoring
 
 
 def calc_hamming_distance(byte1, byte2):
     distance = sum((bin(b1 ^ b2).count("1") for b1, b2 in zip(byte1, byte2)))
     return distance
+
+
+"""
+hamming distance - XOR is its own inverse, commutative and associative
+commutative : A ^ B = B ^ A
+associative : A ^ (B ^ C) = (A ^ B) ^ C
+so with different key lengths, when you've found the correct key length:
+- you'll have a series of bytes: (A ^ key), (B ^ key), (C ^ key), etc
+- hamming distance is the differing number of bits (XOR) of two things
+- we are therefore xoring allllll of these bytes = A ^ key ^ B ^ key ....
+- which is simplified to A ^ B ^ C ....
+-since english characters are so similar in bits - they reduce to a small hamming distnace
+
+if you have hte wrong key length, you are not XORing 
+with the same key every time, and this results in randomness = higher hamming distance
+"""
 
 
 def find_keysize(text_bytes):
@@ -29,12 +44,9 @@ def find_keysize(text_bytes):
             distances.append(calc_hamming_distance(first, second) / keysize)
         avg_distance = sum(distances) / len(distances)
 
-        if len(keysize_scores) > 4:
-            heapq.heappushpop(keysize_scores, (-avg_distance, keysize))
-        else:
-            heapq.heappush(keysize_scores, (-avg_distance, keysize))
+        keysize_scores.append((avg_distance, keysize))
 
-    return sorted(keysize_scores, reverse=True)[0][1]
+    return sorted(keysize_scores)[0][1]
 
 
 def keysize_blocks(text, keysize):
@@ -55,9 +67,8 @@ def break_xor(text_bytes, keysize):
     blocks = keysize_blocks(text_bytes, keysize)
     resulting_blocks = []
 
-    for idx, block in enumerate(blocks):
-        best_score = 0
-        best_block = None
+    for block in blocks:
+        best_score, best_block = 0, None
         for i in range(0, 255):
             score, decoded_bytes = xor_key(block, i)
             if score > best_score:
@@ -77,4 +88,5 @@ from_text = f.read()
 text_bytes = base64.b64decode(from_text)
 
 keysize = find_keysize(text_bytes)
+print("Best keysize is", keysize)
 print(break_xor(text_bytes, keysize))
