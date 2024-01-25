@@ -7,11 +7,27 @@
 
 # Detect it.
 
+
 # Remember that the problem with ECB is that it is stateless and deterministic;
 # the same 16 byte plaintext block will always produce the same 16 byte ciphertext.
 
 
+def text_to_blocks(text, blocksize):
+    blocks = [
+        text[x * blocksize : (x * blocksize) + blocksize]
+        for x in range(len(text) // blocksize)
+    ]
+    return blocks
+
+
 f = open("c8.txt", "r")
-ciphertexts = [bytes.fromhex(text) for text in f.readlines()]
-print(len(ciphertexts))
+blocksize = 16
+ciphertexts = [bytes.fromhex(text.strip()) for text in f]
 # 204 of them.... D:
+
+for i, text in enumerate(ciphertexts):
+    blocks = text_to_blocks(text, blocksize)
+    num_blocks = len(blocks)
+    unique_blocks = len(set(blocks))
+    if num_blocks != unique_blocks:
+        print("Line {} has repeated chunks of bytes".format(i))

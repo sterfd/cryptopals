@@ -8,20 +8,11 @@
 
 # Here's how:
 
-import base64
-from s1_c123_redone import vowel_scoring
-
-
-def calc_hamming_distance(byte1, byte2):
-    distance = sum((bin(b1 ^ b2).count("1") for b1, b2 in zip(byte1, byte2)))
-    return distance
-
-
 """
 hamming distance - XOR is its own inverse, commutative and associative
 commutative : A ^ B = B ^ A
 associative : A ^ (B ^ C) = (A ^ B) ^ C
-so with different key lengths, when you've found the correct key length:
+with different key lengths, when you've found the correct key length:
 - you'll have a series of bytes: (A ^ key), (B ^ key), (C ^ key), etc
 - hamming distance is the differing number of bits (XOR) of two things
 - we are therefore xoring allllll of these bytes = A ^ key ^ B ^ key ....
@@ -31,6 +22,14 @@ so with different key lengths, when you've found the correct key length:
 if you have hte wrong key length, you are not XORing 
 with the same key every time, and this results in randomness = higher hamming distance
 """
+
+import base64
+from c123_redone import vowel_scoring
+
+
+def calc_hamming_distance(byte1, byte2):
+    distance = sum((bin(b1 ^ b2).count("1") for b1, b2 in zip(byte1, byte2)))
+    return distance
 
 
 def find_keysize(text_bytes):
@@ -43,9 +42,7 @@ def find_keysize(text_bytes):
             second = text_bytes[keysize + i : keysize * 2 + i]
             distances.append(calc_hamming_distance(first, second) / keysize)
         avg_distance = sum(distances) / len(distances)
-
         keysize_scores.append((avg_distance, keysize))
-
     return sorted(keysize_scores)[0][1]
 
 
