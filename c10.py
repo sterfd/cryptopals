@@ -75,11 +75,16 @@ key = "YELLOW SUBMARINE"
 key_b = bytes(key, encoding="utf-8")
 iv_b = bytes(16)
 
-f = open("c7_decrypted.txt", "rb")
-decrypted_b = f.read()
-check = encrypt_AES_CBC(decrypted_b, key_b, iv_b)
-cipher_text = CBC_encryption(decrypted_b, iv_b, key_b)
-print("encryption by CBC result:", check == cipher_text)
+# f = open("c7_decrypted.txt", "rb")
+# decrypted_b = f.read()
+# check = encrypt_AES_CBC(decrypted_b, key_b, iv_b)
+# cipher_text = CBC_encryption(decrypted_b, iv_b, key_b)
+# print("encryption by CBC result:", check == cipher_text)
 
-plain_text = CBC_decryption(cipher_text, iv_b, key_b)
-print("decryption by CBC result:", plain_text == decrypted_b)
+# plain_text = CBC_decryption(cipher_text, iv_b, key_b)
+# print("decryption by CBC result:", plain_text == decrypted_b)
+
+f = open("c10.txt", "r")
+decrypted_b = base64.b64decode(f.read())
+plain_text = CBC_decryption(decrypted_b, iv_b, key_b)
+print(plain_text)
