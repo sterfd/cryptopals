@@ -33,43 +33,53 @@ def encrypt_AES_ECB(message, key):
     return cipher.encrypt(message)
 
 
+def encrypt_AES_CBC(message, key, iv):
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    return cipher.encrypt(message)
+
+
 def write_to_file(contents, filename):
     f = open(filename, "wb")
     f.write(contents)
     f.close()
 
 
-def CBC_encryption(message, iv):
-    # chunk into blocks
-    # add padding if needed
-
-    pass
-
-
-def CBC_encrypt_block(block, key):
-    pass
-
-
-# overall function to build cipher
-# have a encrypted array = []
-# takes in bytes to encrypt
-# breaks it up into blocks of keysize length chunks
-# sends each block off to helper function to ECB and return ecb block
-#
-
-# helper function to deal with each block
-#
+def CBC_encryption(message, iv, key):
+    ciphertext = []
+    bs = len(iv)
+    blocks = [message[bs * i : (bs * (i + 1))] for i in range(len(message) // bs)]
+    blocks[-1] = pad_block(blocks[-1], bs)
+    prev_block = iv
+    for block in blocks:
+        xor_block = bytes(b1 ^ b2 for b1, b2 in zip(prev_block, block))
+        enc_block = encrypt_AES_ECB(xor_block, key)
+        ciphertext.append(enc_block)
+        prev_block = enc_block
+    return b"".join(ciphertext)
 
 
-key = "YELLOW SUBMARINE"  # 16 key length
+def CBC_decryption(message, iv, key):
+    plaintext = []
+    bs = len(iv)
+    blocks = [message[bs * i : (bs * (i + 1))] for i in range(len(message) // bs)]
+    prev = iv
+    for block in blocks:
+        dec_block = decrypt_AES_ECB(block, key)
+        xored = bytes(b1 ^ b2 for b1, b2 in zip(dec_block, prev))
+        plaintext.append(xored)
+        prev = block
+    return b"".join(plaintext)
+
+
+key = "YELLOW SUBMARINE"
 key_b = bytes(key, encoding="utf-8")
 iv_b = bytes(16)
 
+f = open("c7_decrypted.txt", "rb")
+decrypted_b = f.read()
+check = encrypt_AES_CBC(decrypted_b, key_b, iv_b)
+cipher_text = CBC_encryption(decrypted_b, iv_b, key_b)
+print("encryption by CBC result:", check == cipher_text)
 
-# example encryption
-# f = open("c7_decrypted.txt", "rb")
-# decrypted_b = f.read()
-# print(len(decrypted_b))
-# encrypted_ECB = encrypt_AES_ECB(decrypted_b, key_b)
-# encrypted_b64 = base64.b64encode(encrypted_ECB)
-# print(encrypted_b64)
+plain_text = CBC_decryption(cipher_text, iv_b, key_b)
+print("decryption by CBC result:", plain_text == decrypted_b)

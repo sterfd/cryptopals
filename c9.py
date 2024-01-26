@@ -28,4 +28,4 @@ def pad_block(message, block_len):
 message = "YELLOW SUBMARINE"
 byte_m = bytes(message, encoding="utf-8")
 
-print(pad_block(byte_m, 20))
+# print(pad_block(byte_m, 20))
