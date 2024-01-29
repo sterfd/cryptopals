@@ -124,7 +124,7 @@ def make_transposed_keysize_blocks(text: bytes, keysize: int) -> list[bytes]:
     return blocks
 
 
-def xor_key(entry: bytes, key: bytes) -> tuple(float, bytes):
+def xor_key(entry: bytes, key: bytes) -> tuple[float, bytes]:
     decoded_bytes = bytes(a ^ key for a in entry)
     return (vowel_scoring(decoded_bytes), decoded_bytes)
 
@@ -152,7 +152,7 @@ def break_repeating_xor(ciphertext: bytes, keysize: int) -> str:
 # AES encryption
 
 
-def text_to_blocks(text_b: bytes, blocksize: int) -> list(bytes):
+def text_to_blocks(text_b: bytes, blocksize: int) -> list[bytes]:
     blocks = [
         text_b[x * blocksize : (x * blocksize) + blocksize]
         for x in range(len(text_b) // blocksize)
@@ -214,7 +214,7 @@ def decrypt_CBC(message: bytes, iv: bytes, key: bytes) -> bytes:
     return b"".join(plaintext)
 
 
-def encryption_CBC_or_ECB(message, key_len):
+def encryption_oracle_ECB_CBC(message, key_len):
     key = random.randbytes(key_len)
     pre_message = random.randbytes(random.randint(5, 10))
     post_message = random.randbytes(random.randint(5, 10))
