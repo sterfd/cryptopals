@@ -37,7 +37,7 @@ hp_freq = {
     "q": 0.001,
 }
 
-from s1_c123_redone import frequency_kl_scoring
+from c123_redone import frequency_kl_scoring
 
 
 def xor_key(entry, key):

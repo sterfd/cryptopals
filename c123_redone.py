@@ -64,23 +64,6 @@ def xor_key(entry, key):
     en_message = bytes.fromhex(entry)
     decoded_bytes = bytes(a ^ key for a in en_message)
 
-    # KL_divergence scoring
-    # score = frequency_kl_scoring(decoded_bytes)
-    # if len(best_scores) > 10:
-    #     heapq.heappushpop(best_scores, (-score, key, decoded_bytes))
-    # else:
-    #     heapq.heappush(best_scores, (-score, key, decoded_bytes))
-
-    # score = space_scoring(decoded_bytes)
-    # if score > 0:
-    #     print(score, key, decoded_bytes)
-
-    # score = vowel_scoring(decoded_bytes)
-    # if len(best_scores) > 4:
-    #     heapq.heappushpop(best_scores, (score, key, decoded_bytes))
-    # else:
-    #     heapq.heappush(best_scores, (score, key, decoded_bytes))
-
 
 def space_scoring(decoded):
     score = int(decoded.count(ord(" ")) / len(decoded) * 1000) / 1000
