@@ -20,14 +20,20 @@ def text_to_blocks(text, blocksize):
     return blocks
 
 
+def detect_ECB(ciphertext, blocksize):
+    blocks = text_to_blocks(ciphertext, blocksize)
+    num_blocks = len(blocks)
+    unique_blocks = len(set(blocks))
+    if num_blocks != unique_blocks:
+        return True
+    return False
+
+
 f = open("c8.txt", "r")
 blocksize = 16
 ciphertexts = [bytes.fromhex(text.strip()) for text in f]
 # 204 of them.... D:
 
-for i, text in enumerate(ciphertexts):
-    blocks = text_to_blocks(text, blocksize)
-    num_blocks = len(blocks)
-    unique_blocks = len(set(blocks))
-    if num_blocks != unique_blocks:
-        print("Line {} has repeated chunks of bytes".format(i))
+# for i, text in enumerate(ciphertexts):
+#     if detect_ECB(text, blocksize):
+#         print("Line {} has repeated chunks of bytes".format(i))

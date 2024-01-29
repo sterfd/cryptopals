@@ -29,8 +29,7 @@ def decrypt_AES_ECB(message, key):
 
 
 def encrypt_AES_ECB(message, key):
-    pad_len = len(message) + (len(message) % len(key))
-    padded_message = pad_block(message, pad_len)
+    padded_message = pad_block(message, len(key))
     cipher = AES.new(key, AES.MODE_ECB)
     return cipher.encrypt(padded_message)
 

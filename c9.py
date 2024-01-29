@@ -19,11 +19,16 @@
 
 def pad_block(message, block_len):
     padding = b"\x04"
-    padding_len = block_len - len(message)
+    padding_len = (
+        0 if len(message) % block_len == 0 else block_len - (len(message) % block_len)
+    )
     message += padding * padding_len
 
     return message
 
+
+# if remainder is 0, no padding
+# if remainder is 1, 1 padding
 
 message = "YELLOW SUBMARINE"
 byte_m = bytes(message, encoding="utf-8")

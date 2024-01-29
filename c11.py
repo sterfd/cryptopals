@@ -25,6 +25,7 @@
 
 import random
 from c10 import CBC_encryption, encrypt_AES_ECB
+from c8 import detect_ECB
 
 
 def encryption_oracle(message, key_len):
@@ -34,9 +35,11 @@ def encryption_oracle(message, key_len):
     enc_mode = random.choice(["ecb", "cbc"])
 
     if enc_mode == "ecb":
+        print("actually ecb")
         return encrypt_AES_ECB(pre_message + message + post_message, key)
     # cbc otherwise
     iv = random.randbytes(key_len)
+    print("actually cbc")
     return CBC_encryption(pre_message + message + post_message, key, iv)
 
 
@@ -44,4 +47,8 @@ f = open("c7_decrypted.txt", "r")
 plaintext = f.read()
 plaintext_b = bytes(plaintext, encoding="utf-8")
 
-print(encryption_oracle(plaintext_b, 16))
+ciphertext = encryption_oracle(plaintext_b, 16)
+if detect_ECB(ciphertext, 16):
+    print("ECB mode was detected by repeating blocks")
+else:
+    print("Maybe CBC since ECB was not detected")
