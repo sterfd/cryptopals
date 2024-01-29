@@ -29,8 +29,10 @@ def decrypt_AES_ECB(message, key):
 
 
 def encrypt_AES_ECB(message, key):
+    pad_len = len(message) + (len(message) % len(key))
+    padded_message = pad_block(message, pad_len)
     cipher = AES.new(key, AES.MODE_ECB)
-    return cipher.encrypt(message)
+    return cipher.encrypt(padded_message)
 
 
 def encrypt_AES_CBC(message, key, iv):
@@ -87,4 +89,4 @@ iv_b = bytes(16)
 f = open("c10.txt", "r")
 decrypted_b = base64.b64decode(f.read())
 plain_text = CBC_decryption(decrypted_b, iv_b, key_b)
-print(plain_text)
+# print(plain_text)
