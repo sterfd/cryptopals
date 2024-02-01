@@ -72,6 +72,19 @@ def CBC_decryption(message, iv, key):
     return b"".join(plaintext)
 
 
+def CBC_decryption_AAO(message, iv, key):
+    bs = len(iv)
+    blocks_b = [iv] + [
+        message[bs * i : (bs * (i + 1))] for i in range(len(message) // bs)
+    ]
+    blocks_dec = [decrypt_AES_ECB(b, key) for b in blocks_b[1:]]
+    blocks_xor = [
+        bytes(b1 ^ b2 for b1, b2 in zip(blocks_dec[i], blocks_b[i]))
+        for i in range(len(message) // bs)
+    ]
+    return b"".join(blocks_xor)
+
+
 key = "YELLOW SUBMARINE"
 key_b = bytes(key, encoding="utf-8")
 iv_b = bytes(16)
@@ -87,5 +100,5 @@ iv_b = bytes(16)
 
 f = open("c10.txt", "r")
 decrypted_b = base64.b64decode(f.read())
-plain_text = CBC_decryption(decrypted_b, iv_b, key_b)
-# print(plain_text)
+plain_text = CBC_decryption_AAO(decrypted_b, iv_b, key_b)
+print(plain_text)

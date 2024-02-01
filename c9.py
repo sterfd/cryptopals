@@ -27,9 +27,6 @@ def pad_block(message, block_len):
     return message
 
 
-# if remainder is 0, no padding
-# if remainder is 1, 1 padding
-
 message = "YELLOW SUBMARINE"
 byte_m = bytes(message, encoding="utf-8")
 
