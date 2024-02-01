@@ -51,7 +51,12 @@
 
 import random
 import base64
-from cryptopals_functions import encrypt_AES_ECB, decrypt_AES_ECB, pad_message
+from cryptopals_functions import (
+    encrypt_AES_ECB,
+    decrypt_AES_ECB,
+    pad_message,
+    detect_ECB,
+)
 
 
 def generate_key(key_len):
@@ -92,7 +97,6 @@ def decrypt_ECB(tail, key):
     return decrypted
 
 
-b64_map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 tail = """Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
 aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq
 dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg
@@ -100,6 +104,7 @@ YnkK"""
 key = b"\xc0P:6\xaet{\xd3O\x13\x96\x12m\x1a\x9f\xaa"
 
 keysize, secret_len = find_ECB_keysize(tail, key)
-print("keysize is", keysize, "len of message is", secret_len)
-plaintext = decrypt_ECB(tail, key)
-print("secret message is", plaintext[: secret_len + 1])
+# print("keysize is", keysize, "len of message is", secret_len)
+# print("ecb detected:", detect_ECB(b"A" * 50, keysize))
+# plaintext = decrypt_ECB(tail, key)
+# print("secret message is", plaintext[: secret_len + 1])

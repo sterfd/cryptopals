@@ -170,15 +170,20 @@ def detect_ECB(ciphertext: bytes, blocksize: int) -> bool:
 
 
 def pad_message(message: bytes, bs: int) -> bytes:
-    padding = b"\x04"
     padding_len = 0 if len(message) % bs == 0 else bs - (len(message) % bs)
-    message += padding * padding_len
+    padding = padding_len * bytes([padding_len])
+    message += padding
     return message
 
 
 def decrypt_AES_ECB(message: bytes, key: bytes) -> bytes:
     cipher = AES.new(key, AES.MODE_ECB)
-    return cipher.decrypt(message)
+    plaintext = cipher.decrypt(message)
+    for i in range(len(key) - 1, 1, -1):
+        last_bytes = plaintext[-i:]
+        if len(set(last_bytes)) == 1 and last_bytes[0] == len(last_bytes):
+            return plaintext[:-i]
+    return plaintext
 
 
 def encrypt_AES_ECB(message: bytes, key: bytes) -> bytes:
