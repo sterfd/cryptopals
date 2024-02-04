@@ -63,8 +63,10 @@ aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq
 dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg
 YnkK"""
         )
+        self.num_calls = 0
 
     def encrypt_message(self, plaintext: bytes) -> bytes:
+        self.num_calls += 1
         return encrypt_AES_ECB(plaintext + self.tail, self.key)
 
 
@@ -105,11 +107,12 @@ def ecb_byte_time():
     blocksize, tail_len = find_blocksize()
     if not confirm_ecb(blocksize):
         return "Oh no not ecb encryption"
-    return decrypt_tail_ecb(blocksize, tail_len)
+    plain_text = decrypt_tail_ecb(blocksize, tail_len)
+    print(ecb_oracle.num_calls)
+    return plain_text
 
 
 print(ecb_byte_time())
-
 
 # def decrypt_ECB(tail, key):
 #     decrypted = b""
