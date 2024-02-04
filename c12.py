@@ -51,59 +51,86 @@
 
 import random
 import base64
-from cryptopals_functions import (
-    encrypt_AES_ECB,
-    decrypt_AES_ECB,
-    pad_message,
-    detect_ECB,
-)
+from cryptopals_functions import encrypt_AES_ECB
 
 
-def generate_key(key_len):
-    return random.randbytes(key_len)
-
-
-def new_oracle(message, string_tail, key):
-    tail_64 = base64.b64decode(string_tail)
-    return encrypt_AES_ECB(message + tail_64, key)
-
-
-def find_ECB_keysize(tail, key):
-    first_ct_len = len(new_oracle(bytes(1), tail, key))
-    for i in range(100):
-        ciphertext = new_oracle(bytes(i), tail, key)
-        if len(ciphertext) > first_ct_len:
-            block_size = len(ciphertext) - first_ct_len
-            message_len = first_ct_len - i
-            return block_size, message_len
-
-
-def decrypt_ECB(tail, key):
-    decrypted = b""
-    tail_cipher = new_oracle(decrypted, tail, key)
-
-    for block_num in range(len(tail_cipher) // 16):
-        message = b"A" * 15
-        for _ in range(16):
-            std_cipher = new_oracle(message, tail, key)[: 16 * (block_num + 1)]
-            for i in range(256):
-                ch = bytes([i])
-                ciphertext = new_oracle(message + decrypted + ch, tail, key)
-
-                if ciphertext[: 16 * (block_num + 1)] == std_cipher:
-                    decrypted += ch
-                    message = message[:-1]
-                    break
-    return decrypted
-
-
-tail = """Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
+class Oracle:
+    def __init__(self):
+        self.key = random.randbytes(16)
+        self.tail = base64.b64decode(
+            """Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
 aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq
 dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg
 YnkK"""
-key = b"\xc0P:6\xaet{\xd3O\x13\x96\x12m\x1a\x9f\xaa"
+        )
 
-keysize, secret_len = find_ECB_keysize(tail, key)
+    def encrypt_message(self, plaintext: bytes) -> bytes:
+        return encrypt_AES_ECB(plaintext + self.tail, self.key)
+
+
+def ecb_byte_time():
+    def find_blocksize():
+        first_len = len(ecb_oracle.encrypt_message(bytes(0)))
+        for i in range(100):
+            ct = ecb_oracle.encrypt_message(bytes(i))
+            if len(ct) > first_len:
+                bs = len(ct) - first_len
+                message_len = first_len - i
+                return bs, message_len
+
+    def confirm_ecb(bs):
+        ct = ecb_oracle.encrypt_message(bytes(bs * 3))
+        if len(ct) == len(set(ct)):
+            return False
+        return True
+
+    def decrypt_tail_ecb(bs, tail_len):
+        decrypted = b""
+
+        for b_num in range(tail_len // bs + 1):
+            start_chunk = bytes(15)
+            for _ in range(16):
+                std = ecb_oracle.encrypt_message(start_chunk)
+                for i in range(256):
+                    ct = ecb_oracle.encrypt_message(
+                        start_chunk + decrypted + bytes([i])
+                    )
+                    if ct[: (b_num + 1) * 16] == std[: (b_num + 1) * 16]:
+                        decrypted += bytes([i])
+                        start_chunk = start_chunk[:-1]
+                        break
+        return decrypted
+
+    ecb_oracle = Oracle()
+    blocksize, tail_len = find_blocksize()
+    if not confirm_ecb(blocksize):
+        return "Oh no not ecb encryption"
+    return decrypt_tail_ecb(blocksize, tail_len)
+
+
+print(ecb_byte_time())
+
+
+# def decrypt_ECB(tail, key):
+#     decrypted = b""
+#     tail_cipher = new_oracle(decrypted, tail, key)
+
+#     for block_num in range(len(tail_cipher) // 16):
+#         message = b"A" * 15
+#         for _ in range(16):
+#             std_cipher = new_oracle(message, tail, key)[: 16 * (block_num + 1)]
+#             for i in range(256):
+#                 ch = bytes([i])
+#                 ciphertext = new_oracle(message + decrypted + ch, tail, key)
+
+#                 if ciphertext[: 16 * (block_num + 1)] == std_cipher:
+#                     decrypted += ch
+#                     message = message[:-1]
+#                     break
+#     return decrypted
+
+
+# keysize, secret_len = find_ECB_keysize(tail, key)
 # print("keysize is", keysize, "len of message is", secret_len)
 # print("ecb detected:", detect_ECB(b"A" * 50, keysize))
 # plaintext = decrypt_ECB(tail, key)
