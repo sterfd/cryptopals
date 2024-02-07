@@ -70,8 +70,10 @@ YnkK"""
         return encrypt_AES_ECB(plaintext + self.tail, self.key)
 
 
-def ecb_byte_time():
-    def find_blocksize():
+def ecb_byte_time() -> (bytes, int):
+    cipher_blocks = {}
+
+    def find_blocksize() -> (int, int):
         first_len = len(ecb_oracle.encrypt_message(bytes(0)))
         for i in range(100):
             ct = ecb_oracle.encrypt_message(bytes(i))
@@ -80,36 +82,66 @@ def ecb_byte_time():
                 message_len = first_len - i
                 return bs, message_len
 
-    def confirm_ecb(bs):
+    def confirm_ecb(bs: int) -> bool:
         ct = ecb_oracle.encrypt_message(bytes(bs * 3))
         if len(ct) == len(set(ct)):
             return False
         return True
 
-    def decrypt_tail_ecb(bs, tail_len):
+    def decrypt_tail_1x1(bs: int, tail_len: int) -> bytes:
         decrypted = b""
-
-        for b_num in range(tail_len // bs + 1):
-            start_chunk = bytes(15)
-            for _ in range(16):
-                std = ecb_oracle.encrypt_message(start_chunk)
+        num_blocks = tail_len // bs + 1
+        for block in range(num_blocks):
+            start, end = block * 16, (block + 1) * 16
+            for pad in range(15, -1, -1):
+                std = ecb_oracle.encrypt_message(bytes(pad))
                 for i in range(256):
-                    ct = ecb_oracle.encrypt_message(
-                        start_chunk + decrypted + bytes([i])
-                    )
-                    if ct[: (b_num + 1) * 16] == std[: (b_num + 1) * 16]:
+                    ct = ecb_oracle.encrypt_message(bytes(pad) + decrypted + bytes([i]))
+                    if ct[start:end] == std[start:end]:
                         decrypted += bytes([i])
-                        start_chunk = start_chunk[:-1]
                         break
         return decrypted
+
+    def generate_blocks(bs):
+        for pad in range(16):
+            cipher = ecb_oracle.encrypt_message(bytes(pad))
+            for block_num in range(len(cipher) // bs):
+                block = cipher[block_num * bs : (block_num + 1) * bs]
+                cipher_blocks[(pad, block_num)] = block
+
+    def decrypt_tail_all(bs: int, tail_len: int) -> bytes:
+        decrypted = b""
+        for i in range(tail_len + 1):
+            padding = []
+            pad_block = bytes(15 - i) + decrypted if i < 16 else decrypted[-15:]
+            for ch in range(256):
+                padding.append(pad_block + bytes([ch]))
+            ch_ciphertext = ecb_oracle.encrypt_message(b"".join(padding))
+            offset = 15 - i % 16
+            block = i // 16
+            for ch in range(256):
+                test_ch = ch_ciphertext[ch * bs : (ch + 1) * bs]
+                if cipher_blocks[(offset, block)] == test_ch:
+                    decrypted += bytes([ch])
+                    break
+        return decrypted
+
+    # ohhh if we check for all ch at the same time, once decrypted longer than 16, we dont have to do padding
+    # only need to take the last 15 bytes of decrypted, and move the window of where we're comparing to std
+    # make a hashmap - of (pad_offset, block) -> bytes in the block
+    # can find pad_offset of by len of decrypted
 
     ecb_oracle = Oracle()
     blocksize, tail_len = find_blocksize()
     if not confirm_ecb(blocksize):
         return "Oh no not ecb encryption"
-    plain_text = decrypt_tail_ecb(blocksize, tail_len)
-    print(ecb_oracle.num_calls)
-    return plain_text
+    # plain_text = decrypt_tail_1x1(blocksize, tail_len)
+    generate_blocks(blocksize)
+    plain_text = decrypt_tail_all(blocksize, tail_len)
+
+    return plain_text, ecb_oracle.num_calls
 
 
-print(ecb_byte_time())
+plaintext, oracle_calls = ecb_byte_time()
+print(plaintext)
+print(oracle_calls)

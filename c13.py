@@ -45,7 +45,7 @@ class Profiles:
                 email_add[i] = 95
         return b"email=" + email_add + b"&uid=10&role=user"
 
-    def encrypt_profile_ECB(self, email):
+    def encrypt_profile(self, email):
         profile_encoding = self.profile_for(email)
         return encrypt_AES_ECB(profile_encoding, self.key)
 
@@ -62,24 +62,20 @@ class Profiles:
 
 
 def find_enc_padding():
-    end_user = b"@user"
-    prev_len = len(oracle.encrypt_profile_ECB(end_user))
+    prev_len = len(oracle.encrypt_profile(b""))
     for i in range(1, 16):
-        email = bytes([0]) * i
-        enc_profile = oracle.encrypt_profile_ECB(email)
+        email = b"0" * i
+        enc_profile = oracle.encrypt_profile(email)
         if len(enc_profile) > prev_len:
             return i - 1
 
 
+bs = 16
 oracle = Profiles()
-profile_padlen = find_enc_padding()
-ciphertext_end_user_block = oracle.encrypt_profile_ECB(
-    bytes([0]) * (profile_padlen + 4)
-)
-admin_email = bytes([0]) * (profile_padlen + 1) + b"admin" + bytes([11]) * 11
-ciphertext_admin_padded = oracle.encrypt_profile_ECB(admin_email)
-ciphertext_changed_role = (
-    ciphertext_end_user_block[:-16] + ciphertext_admin_padded[16:32]
-)
+enc_block = find_enc_padding()
+ciphertext_no_user = oracle.encrypt_profile(b" " * (enc_block + len("user")))[:-bs]
+admin_email = (b" " * (enc_block + 1)) + b"admin" + (b" " * bs)
+ciphertext_admin_iso = oracle.encrypt_profile(admin_email)[bs : bs * 2]
+ciphertext_changed_role = ciphertext_no_user + ciphertext_admin_iso
 role = oracle.get_role(ciphertext_changed_role)
 print(role)
