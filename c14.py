@@ -24,7 +24,7 @@ from cryptopals_functions import encrypt_AES_ECB
 class Oracle:
     def __init__(self):
         self.key = random.randbytes(16)
-        self.head = random.randbytes(random.randint(1, 64))
+        self.head = random.randbytes(random.randint(1, 256))
         self.tail = base64.b64decode(
             """Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
 aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq
@@ -52,9 +52,8 @@ def separate_tail():
             return n, (i + 1) * 16, len(ciphertext) - (i + 2) * 16
 
 
-def decrypt_tail(pad_len, start_idx, tail_len):
+def decrypt_tail_1x1(pad_len, start_idx, tail_len):
     plaintext = b""
-
     for tail_block in range(tail_len // 16 + 1):
         pad = bytes(pad_len - 1)
         target = start_idx + (tail_block + 1) * 16
@@ -71,14 +70,60 @@ def decrypt_tail(pad_len, start_idx, tail_len):
     return plaintext
 
 
+def check_blocks(ciphertext, std):
+    block_len = len(std)
+    for block_num in range(len(ciphertext) // block_len + 1):
+        block = ciphertext[block_num * block_len : (block_num + 1) * block_len]
+        if block_num == 48 and block_len == 32:
+            print(block_num, bytes([block_num]))
+            print(std)
+            print(block)
+        if block == std:
+            # print("found", block_num, bytes([block_num]))
+            return bytes([block_num])
+
+
+def decrypt_tail_scattershot(pad_len, start_idx, tail_len):
+    plaintext = b""
+    print("found pad len and start idx", pad_len, start_idx)
+    for tail_block in range(tail_len // 16 + 1):
+        target = start_idx + (tail_block + 1) * 16
+        for i_in_block in range(1, 17):
+            std_cipher = oracle.encrypt_message(bytes(pad_len - i_in_block))[
+                start_idx:target
+            ]
+            padding = [bytes(pad_len)]
+            for b in range(1, 256):
+                padding.append(bytes(16 - i_in_block) + plaintext + bytes([b]))
+                # print(b, padding[-1])
+            test_cipher = oracle.encrypt_message(b"".join(padding))
+            ch = check_blocks(test_cipher[start_idx:], std_cipher)
+            if not ch:
+                print("no byte found")
+                print(plaintext, len(plaintext))
+                print(
+                    "number of blocks, len of first pad, others",
+                    len(padding),
+                    len(padding[0]),
+                    len(padding[-1]),
+                    "std cipher",
+                    len(std_cipher),
+                    std_cipher,
+                )
+                print("whats going into std-cipher", pad_len - i_in_block)
+                print(start_idx)
+                print(len(test_cipher[start_idx:]))
+                print("into padding", len(b"".join(padding)))
+                print("start_idx, target", start_idx, target)
+                return
+            plaintext += ch
+    print(plaintext, len(plaintext))
+
+
 tail_blocks = {}
 oracle = Oracle()
 padding_len, padblock_idx, tail_len = separate_tail()
-plaintext = decrypt_tail(padding_len, padblock_idx, tail_len)
-print(plaintext, oracle.num_calls)
-
-# find the start of the tail
-# start with 32 bytes of padding, break ciphert into blocks and see if len(set) == len(list)
-# increment until len of ciphertext increases
-# the starting block of tail will be after the two repeating blocks
-# same thing as c12
+# plaintext = decrypt_tail_1x1(padding_len, padblock_idx, tail_len)
+# print(padding_len, padblock_idx, tail_len)
+# print(plaintext, oracle.num_calls)
+decrypt_tail_scattershot(padding_len, padblock_idx, tail_len)
