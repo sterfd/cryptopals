@@ -113,28 +113,3 @@ def ecb_byte_time():
 
 
 print(ecb_byte_time())
-
-# def decrypt_ECB(tail, key):
-#     decrypted = b""
-#     tail_cipher = new_oracle(decrypted, tail, key)
-
-#     for block_num in range(len(tail_cipher) // 16):
-#         message = b"A" * 15
-#         for _ in range(16):
-#             std_cipher = new_oracle(message, tail, key)[: 16 * (block_num + 1)]
-#             for i in range(256):
-#                 ch = bytes([i])
-#                 ciphertext = new_oracle(message + decrypted + ch, tail, key)
-
-#                 if ciphertext[: 16 * (block_num + 1)] == std_cipher:
-#                     decrypted += ch
-#                     message = message[:-1]
-#                     break
-#     return decrypted
-
-
-# keysize, secret_len = find_ECB_keysize(tail, key)
-# print("keysize is", keysize, "len of message is", secret_len)
-# print("ecb detected:", detect_ECB(b"A" * 50, keysize))
-# plaintext = decrypt_ECB(tail, key)
-# print("secret message is", plaintext[: secret_len + 1])
