@@ -126,11 +126,6 @@ def ecb_byte_time() -> (bytes, int):
                     break
         return decrypted
 
-    # ohhh if we check for all ch at the same time, once decrypted longer than 16, we dont have to do padding
-    # only need to take the last 15 bytes of decrypted, and move the window of where we're comparing to std
-    # make a hashmap - of (pad_offset, block) -> bytes in the block
-    # can find pad_offset of by len of decrypted
-
     ecb_oracle = Oracle()
     blocksize, tail_len = find_blocksize()
     if not confirm_ecb(blocksize):

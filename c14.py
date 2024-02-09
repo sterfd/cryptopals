@@ -75,7 +75,6 @@ def check_blocks(ciphertext: bytes, std: bytes) -> bytes:
     for block_num in range(len(ciphertext) // block_len + 1):
         block = ciphertext[block_num * block_len : (block_num + 1) * block_len]
         if block == std:
-            print(block_num, std, len(std))
             return bytes([block_num])
 
 
@@ -91,25 +90,40 @@ def decrypt_tail_scattershot(pad_len: int, start: int, tail_len: int) -> bytes:
             test_cipher = oracle.encrypt_message(b"".join(padding))
             ch = check_blocks(test_cipher[start:], std_cipher)
             if not ch:
-                print(
-                    16 - block_i,
-                    plaintext,
-                    bytes([48]),
-                    oracle.encrypt_message(
-                        bytes(16 - block_i) + plaintext + bytes([48])
-                    )[start:target],
-                )
-                print(pad_len, pad_len - block_i, std_cipher)
                 return plaintext
             plaintext += ch
     print(plaintext, len(plaintext))
+
+
+def find_tail_idx(c_blocks):
+    i = 0
+    while c_blocks[i] != c_blocks[i + 1]:
+        i += 1
+    while c_blocks[i] == c_blocks[i + 1]:
+        i += 1
+    return i + 1
+
+
+def generate_tail_blocks(padding_len):
+    for i in range(16):
+        ct = oracle.encrypt_message(bytes(i + padding_len))
+        ct_blocks = [ct[i * 16 : (i + 1) * 16] for i in range(len(ct) // 16)]
+        tail_idx = find_tail_idx(ct_blocks)
+        num_tail_blocks = len(ct_blocks) - tail_idx
+        for block_num in range(num_tail_blocks):
+            tail_blocks[(i, block_num)] = ct_blocks[tail_idx + block_num]
 
 
 tail_blocks = {}
 oracle = Oracle()
 padding_len, padblock_idx, tail_len = separate_tail()
 # plaintext = decrypt_tail_1x1(padding_len, padblock_idx, tail_len)
-# print(len(oracle.head), padding_len, padblock_idx, tail_len)
+print(len(oracle.head), padding_len, padblock_idx, tail_len)
 # print(plaintext, oracle.num_calls)
 pt = decrypt_tail_scattershot(padding_len, padblock_idx, tail_len)
 print(pt, len(pt))
+
+generate_tail_blocks(padding_len)
+
+
+# maybe i should but the byte blocks in the dict as keys and (offset, blocknum) as value????
