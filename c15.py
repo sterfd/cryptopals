@@ -17,6 +17,8 @@
 
 
 # Crypto nerds know where we're going with this. Bear with us.
+
+
 class PaddingError(Exception):
     pass
 
@@ -37,6 +39,8 @@ padding_tests = [
     b"ICE ICE BABY\x04\x04\x04\x04",
     b"ICE ICE BABY\x05\x05\x05\x05",
     b"ICE ICE BABY\x01\x02\x03\x04",
+    b'comment1"="cooking%20MCsuserdata"="what"=""=""=""=" the heck?admin"="true---"=""="comment2"="%20like%20a%20pound%20of%20bacon\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c',
 ]
-for test in padding_tests:
-    print(validate_pkcs_padding(test, 16))
+# for test in padding_tests:
+#     print(len(test))
+#     print(validate_pkcs_padding(test, 16))

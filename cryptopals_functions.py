@@ -82,15 +82,15 @@ def frequency_kl_scoring(decoded):
 
 # ENCRYPTION
 def fixed_xor(b1: bytes, b2: bytes) -> bytes:
-    xor_bytes = bytes(d1 ^ d2 for d1, d2 in zip(b1, b1))
-    return bytes.hex(xor_bytes)
+    xor_bytes = bytes(d1 ^ d2 for d1, d2 in zip(b1, b2))
+    return xor_bytes
 
 
 def encrypt_repeating_xor(message: bytes, key: bytes) -> bytes:
     xor_array = []
     for idx, ch in enumerate(message):
         xor_array.append(ord(ch) ^ ord(key[idx % len(key)]))
-    return bytes.hex(bytes(xor_array))
+    return b"".join(xor_array)
 
 
 # DECRYPTING REPEATING XOR
@@ -170,7 +170,7 @@ def detect_ECB(ciphertext: bytes, blocksize: int) -> bool:
 
 
 def pad_message(message: bytes, bs: int) -> bytes:
-    padding_len = 0 if len(message) % bs == 0 else bs - (len(message) % bs)
+    padding_len = bs - (len(message) % bs)
     padding = padding_len * bytes([padding_len])
     message += padding
     return message
@@ -193,14 +193,15 @@ def encrypt_AES_ECB(message: bytes, key: bytes) -> bytes:
 
 
 def encrypt_CBC(message: bytes, iv: bytes, key: bytes) -> bytes:
+    cipher = AES.new(key, AES.MODE_ECB)
     ciphertext = []
     bs = len(iv)
-    blocks = [message[bs * i : (bs * (i + 1))] for i in range(len(message) // bs)]
-    blocks[-1] = pad_message(blocks[-1], bs)
+    padded = pad_message(message, bs)
+    blocks = [padded[bs * i : (bs * (i + 1))] for i in range(len(padded) // bs + 1)]
     prev_block = iv
     for block in blocks:
         xor_block = bytes(b1 ^ b2 for b1, b2 in zip(prev_block, block))
-        enc_block = encrypt_AES_ECB(xor_block, key)
+        enc_block = cipher.encrypt(xor_block)
         ciphertext.append(enc_block)
         prev_block = enc_block
     return b"".join(ciphertext)
