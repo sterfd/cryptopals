@@ -80,7 +80,7 @@ class Oracle:
         ciphertext = encrypt_CBC(self.message, self.iv, self.key)
         return ciphertext, self.iv
 
-    def check_ct_padding(self, ciphertext):
+    def check_pad(self, ciphertext):
         pt = decrypt_CBC(ciphertext, self.iv, self.key)
         unpadded = validate_pkcs_padding(pt, len(self.key))
         if unpadded:
@@ -88,29 +88,65 @@ class Oracle:
         return False
 
 
-oracle = Oracle()
-ct, iv = oracle.get_ciphertext()
-ct_array = [b for b in ct]
-print("ciphertext")
-for n in range(len(ct_array) // 16):
-    print(ct_array[n * 16 : (n + 1) * 16])
+class CBC_attack:
+    def __init__(self):
+        self.oracle = Oracle()
+        self.ct, self.iv = self.oracle.get_ciphertext()
+        self.ciphertext = self.iv + self.ct
 
-# for range(256), guess the byte, see if you get valid oracle check - if yes, then that is padding byte
-ct_ind = len(ct) - 17
-print("changing byte at", ct_ind, ct_array[ct_ind])
-for i in range(256):
-    ct_array[ct_ind] = i
-    if oracle.check_ct_padding(bytes(ct_array)):
-        print(i, "valid padding")
-        print(oracle.check_ct_padding(bytes(ct_array)))
-        ct_array[ct_ind - 1] += 1
-        print("trying change at", ct_ind - 1, ct_array[ct_ind - 1])
-        print(oracle.check_ct_padding(bytes(ct_array)))
-        ct_array[ct_ind - 1] -= 1
+    def verify_pad_number(self, block, idx):
+        block[idx - 1] = (block[idx - 1] + 1) % 256
+        check_ct = self.oracle.check_pad(block)
+        block[idx - 1] = (block[idx - 1] - 1) % 256
+        if check_ct:
+            return True
+        return False
 
-# print("second position")
-# ct_ind -= 1
-# for i in range(256):
-#     ct_array[ct_ind] = i
-#     if oracle.check_ct_padding(bytes(ct_array)):
-#         print(i, "valid padding")
+    def decrypt_block(self, ct_idx):
+        decrypted = bytearray(16)
+        block = bytearray(self.ciphertext[ct_idx : ct_idx + 32])
+        for pad_len in range(1, 17):
+            pad_idx = 16 - pad_len
+            for i in range(256):
+                block[pad_idx] = i
+                if self.oracle.check_pad(bytes(block)):
+                    if pad_idx > 0 and not self.verify_pad_number(block, pad_idx):
+                        continue
+                    decrypted[pad_idx] = pad_len ^ i
+                    block[pad_idx] = decrypted[pad_idx] ^ (pad_len + 1)
+                    for rest in range(pad_idx + 1, 16):
+                        block[rest] = decrypted[rest] ^ (pad_len + 1)
+                    break
+        return bytes(
+            d ^ p for d, p in zip(decrypted, self.ciphertext[ct_idx : ct_idx + 16])
+        )
+
+    def pad_attack(self):
+        plaintext = b""
+        for block_idx in range(len(self.ciphertext) // 16 - 1):
+            pt_block = self.decrypt_block(block_idx * 16)
+            plaintext += pt_block
+        return plaintext
+
+
+import base64
+
+uhhh_first_try = CBC_attack()
+pt = uhhh_first_try.pad_attack()
+print(base64.b64decode(pt))
+
+
+"""
+                    last block-ciphertext
+                        v   aes-ecb with KEY
+prev block (rand)   last block-decrypted        
+    13                  x
+            XOR
+            v   
+            /x01    last block-plaintext (not seen)
+
+                    last block -decrypted = 13 ^ /x01
+            XOR with prev block
+            v
+            PLAINTEXT OHHHH
+"""
