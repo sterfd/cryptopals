@@ -86,3 +86,11 @@ for i in range(256):
     if pt_concat:
         print("YES")
         break
+
+"""
+get paddinggg-;admin' to the end of a block, then vary the last byte of hte previous block 
+    -send this to oracle - trying to get the ' -> = by varying the byte
+get true;-paddingggggg at the beginning of another block
+
+concatenate tehse two to send the the admin oracle
+"""

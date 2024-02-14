@@ -136,7 +136,7 @@ pt = uhhh_first_try.pad_attack()
 print(base64.b64decode(pt))
 
 
-"""
+""" byte 13 as example
                     last block-ciphertext
                         v   aes-ecb with KEY
 prev block (rand)   last block-decrypted        
@@ -144,8 +144,10 @@ prev block (rand)   last block-decrypted
             XOR
             v   
             /x01    last block-plaintext (not seen)
-
-                    last block -decrypted = 13 ^ /x01
+                        since 13 ^ x = /x01
+                            last block -decrypted: x = 13 ^ /x01
+        so then:
+            x (decrypted)                
             XOR with prev block
             v
             PLAINTEXT OHHHH
