@@ -32,7 +32,8 @@ def validate_pkcs_padding(plaintext: bytes, blocksize: int) -> bytes:
             raise PaddingError
         return plaintext[:-len_padding]
     except PaddingError:
-        print("Invalid PKCS#7 padding error.")
+        # print("Invalid PKCS#7 padding error.")
+        return
 
 
 padding_tests = [
