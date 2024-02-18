@@ -88,7 +88,7 @@ for i in range(256):
         break
 
 """
-get paddinggg-;admin' to the end of a block, then vary the last byte of hte previous block 
+get the block of bytes b'paddinggg-;admin' to the end of a block, then vary the last byte of hte previous block 
     -send this to oracle - trying to get the ' -> = by varying the byte
 get true;-paddingggggg at the beginning of another block
 
