@@ -99,6 +99,6 @@ iv_b = bytes(16)
 # print("decryption by CBC result:", plain_text == decrypted_b)
 
 f = open("c10.txt", "r")
-decrypted_b = base64.b64decode(f.read())
-plain_text = CBC_decryption_AAO(decrypted_b, iv_b, key_b)
+decoded_b = base64.b64decode(f.read())
+plain_text = CBC_decryption_AAO(decoded_b, iv_b, key_b)
 print(plain_text)

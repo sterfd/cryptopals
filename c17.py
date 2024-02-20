@@ -53,8 +53,7 @@ It is easy to get tripped up on the fact that CBC plaintexts are "padded".
         It's an attack that targets a specific bit of code that handles decryption. 
             You can mount a padding oracle on any CBC block, whether it's padded or not."""
 import random
-from cryptopals_functions import encrypt_CBC, decrypt_CBC
-from c15 import validate_pkcs_padding
+from cryptopals_functions import encrypt_CBC, decrypt_CBC, validate_pkcs_padding
 
 
 class Oracle:

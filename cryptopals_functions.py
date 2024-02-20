@@ -12,7 +12,7 @@ def str_to_bytes(message: str, hex_str: str, b64_str: str) -> bytes:
 
 # FREQUENCY SCORING
 
-{
+hp_freq = {
     " ": 0.1744,
     "e": 0.0983,
     "t": 0.0715,
@@ -66,6 +66,10 @@ def frequency_kl_scoring(decoded):
     from collections import Counter
     import math
 
+    for byte in decoded:
+        if byte < 9 or 12 <= byte <= 31 or 91 <= byte <= 94 or byte > 122:
+            return 100
+
     letter_count = Counter(str(decoded).lower())
     message_len = len(decoded)
     mess_freq = {
@@ -77,6 +81,9 @@ def frequency_kl_scoring(decoded):
             KL_div_score += hp_freq[ch] * math.log(hp_freq[ch] / mess_freq[ch])
         else:
             KL_div_score += hp_freq[ch] * math.log(hp_freq[ch] / (10**-10))
+    for ch in mess_freq:
+        if not ch.isascii():
+            KL_div_score += mess_freq
     return KL_div_score  # lower score is better
 
 
@@ -126,7 +133,7 @@ def make_transposed_keysize_blocks(text: bytes, keysize: int) -> list[bytes]:
 
 def xor_key(entry: bytes, key: bytes) -> tuple[float, bytes]:
     decoded_bytes = bytes(a ^ key for a in entry)
-    return (vowel_scoring(decoded_bytes), decoded_bytes)
+    return (frequency_kl_scoring(decoded_bytes), decoded_bytes)
 
 
 def break_repeating_xor(ciphertext: bytes, keysize: int) -> str:
@@ -134,10 +141,10 @@ def break_repeating_xor(ciphertext: bytes, keysize: int) -> str:
     resulting_blocks = []
 
     for block in blocks:
-        best_score, best_block = 0, None
+        best_score, best_block = 100, None
         for i in range(0, 255):
             score, decoded_bytes = xor_key(block, i)
-            if score > best_score:
+            if score < best_score:
                 best_score = score
                 best_block = decoded_bytes
         resulting_blocks.append(best_block)
@@ -238,3 +245,20 @@ def ECB_CBC_detection_oracle(ciphertext: bytes, key_size) -> None:
         print("ECB mode was detected by repeating blocks")
     else:
         print("Maybe CBC since ECB was not detected")
+
+
+class PaddingError(Exception):
+    pass
+
+
+def validate_pkcs_padding(plaintext: bytes, blocksize: int) -> bytes:
+    try:
+        if len(plaintext) % blocksize != 0:
+            raise PaddingError
+        len_padding = plaintext[-1]
+        if len(set([byte for byte in plaintext[-len_padding:]])) != 1:
+            raise PaddingError
+        return plaintext[:-len_padding]
+    except PaddingError:
+        # print("Invalid PKCS#7 padding error.")
+        return
