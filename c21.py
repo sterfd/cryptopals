@@ -35,6 +35,16 @@ class MT19937:
             )
             # 32 bits of ( f * (mt[i-1] ^ (mt[i-1] // 30)) + i)
 
+    def new_seed(self, seed):
+        self.idx = self.n
+        self.MT = [0] * self.n
+        self.MT[0] = seed
+        for i in range(1, self.n):  # loop over every int
+            self.MT[i] = self.wmask & (
+                self.f * (self.MT[i - 1] ^ (self.MT[i - 1] >> (self.w - 2))) + i
+            )
+            # 32 bits of ( f * (mt[i-1] ^ (mt[i-1] // 30)) + i)
+
     def twist(self):  # generate next n values from series x_i
         for i in range(self.n):
             x = (self.MT[i] & self.upper_mask) | (
@@ -89,6 +99,11 @@ class MT19937:
     # )
 
 
-rng = MT19937()
-rng.seed_mt(123)
-print(rng.extract_numbers())
+# rng = MT19937(123)
+# print(rng.extract_numbers())
+# print(rng.extract_numbers())
+# print(rng.extract_numbers())
+# rng.new_seed(123)
+# print(rng.extract_numbers())
+# print(rng.extract_numbers())
+# print(rng.extract_numbers())
