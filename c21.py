@@ -62,11 +62,12 @@ class MT19937:
         if self.idx >= self.n:
             self.twist()
         y = self.MT[self.idx]
-        y = y ^ ((y >> self.u) & self.d)  # y xor (y // 2**11 & 32bit window)
+        y = y ^ ((y >> self.u) & self.d)
+        # y xor (y // 2**11 & 0xFFFFFFFF 32bit window)
         y = y ^ ((y << self.s) & self.b)
-        # y xor (y * 2 **7) & random 13bit window, 32 long)
+        # y xor (y * 2 **7) & 0x9D2C5680 random 13bit window, 32 long)
         y = y ^ ((y << self.t) & self.c)
-        # y xor (y * 2 ** 15 & random 11bit window, 32 long)
+        # y xor (y * 2 ** 15 & 0xEFC60000 random 11bit window, 32 long)
         y = y ^ (y >> self.l)  # y xor (y // 2** 18)
 
         self.idx += 1

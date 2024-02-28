@@ -29,27 +29,24 @@ The new "spliced" generator should predict the values of the original.
     
 # """
 
-#         y = self.MT[self.idx]
-#         y = y ^ ((y >> self.u) & self.d)  # y xor (y // 2**11 & 32bit window)
-#         y = y ^ ((y << self.s) & self.b)
-#         # y xor (y * 2 **7) & random 13bit window, 32 long)
-#         y = y ^ ((y << self.t) & self.c)
-#         # y xor (y * 2 ** 15 & random 11bit window, 32 long)
-#         y = y ^ (y >> self.l)  # y xor (y // 2** 18)
+from c21 import MT19937
 
-#         self.idx += 1
-#         return y & self.wmask
+
+def undo_op(rnd, mask, shift, num_shifts, dir):
+    last = reversed_rnd = rnd
+    for i in range(num_shifts):
+        last = eval(f"({last} {dir} {shift}) & {mask}")
+        reversed_rnd ^= last
+    return reversed_rnd
 
 
 def untemper(rnd):
-    rnd = rnd ^ (rnd >> 18)
-    rnd = rnd ^ ((rnd << 15) & 0xEFC60000)
-
-
-#   y = y ^ ((y << self.s) & self.b)   7, 0x9D2C5680
-
-
-#   y = y ^ ((y >> self.u) & self.d)  # y xor (y // 2**11 & 32bit window)
+    rnd = undo_op(rnd, mask=0xFFFFFFFF, shift=18, num_shifts=1, dir=">>")
+    rnd = undo_op(rnd, mask=0xEFC60000, shift=15, num_shifts=3, dir="<<")
+    rnd = undo_op(rnd, mask=0x9D2C5680, shift=7, num_shifts=4, dir="<<")
+    # what is the purpose of the 0xFFFFFFF mask? if we're shifting right, its a little redundant
+    rnd = undo_op(rnd, mask=0xFFFFFFFF, shift=11, num_shifts=3, dir=">>")
+    return rnd
 
 
 def print_values(variables):
@@ -68,24 +65,35 @@ def print_values(variables):
         )
 
 
-mask = 0xEFC60000
-x = 20425
-x = 20425
-y = 2042589
-z = 2237213405
-m = x ^ ((x << 18) & mask)
-# y = y ^ (y >> self.l)
-print_values(
-    {
-        "x": x,
-        "x << l": x << 15,
-        "x << l & mask": (x << 15) & mask,
-        "x ^(x >> l) & 0x": m,
-        "0": 0,
-        "0xEFC60000": mask,
-        "m": m,
-        "m << l": m << 15,
-        "m << l & 0x": m << 15 & mask,
-        "m ^((m<<l))": m ^ ((m << 15) & mask),
-    }
-)
+def clone_RNG():
+    gen = MT19937(123)
+    rnds = []
+    seeds = []
+    for _ in range(624):
+        rnd = gen.extract_numbers()
+        rnds.append(rnd)
+        seeds.append(untemper(rnd))
+
+    new_gen = MT19937()
+    new_gen.MT = seeds
+    new_gen.idx = 0
+    if new_gen.MT == gen.MT:
+        print("internal state of the generators are the same!")
+
+
+clone_RNG()
+
+# mask = 0xFFFFFFFF
+# test_vals = [204, 22372, 223721, 22372134, 2237213405, (1 << 32) - 1]
+# for x in test_vals:
+
+#     shift = 18
+#     m = x ^ ((x >> shift) & mask)
+
+#     last = reversed_x = m
+#     for i in range(1):
+#         last = (last >> shift) & mask
+#         reversed_x ^= last
+
+#     n = undo_op(m, mask, shift, num_shifts=1, dir=">>")
+#     print_values({"m": m, "x": x, "final": reversed_x, "n": n})
