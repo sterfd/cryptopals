@@ -75,8 +75,7 @@ def clone_RNG():
         seeds.append(untemper(rnd))
 
     new_gen = MT19937()
-    new_gen.MT = seeds
-    new_gen.idx = 0
+    new_gen.MT, new_gen.idx = seeds, 0
     if new_gen.MT == gen.MT:
         print("internal state of the generators are the same!")
 
@@ -85,15 +84,11 @@ clone_RNG()
 
 # mask = 0xFFFFFFFF
 # test_vals = [204, 22372, 223721, 22372134, 2237213405, (1 << 32) - 1]
+# shift = 18
 # for x in test_vals:
 
-#     shift = 18
 #     m = x ^ ((x >> shift) & mask)
-
-#     last = reversed_x = m
-#     for i in range(1):
-#         last = (last >> shift) & mask
-#         reversed_x ^= last
-
 #     n = undo_op(m, mask, shift, num_shifts=1, dir=">>")
-#     print_values({"m": m, "x": x, "final": reversed_x, "n": n})
+
+# print_values({"m": m, "x": x, "final": n})
+print_values({"x": 0xEFC60000})
