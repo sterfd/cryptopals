@@ -18,9 +18,48 @@
 #   Imagine if you'd relied on that advice to, say, encrypt a disk.
 
 
-def edit(ct, key, offset, newtext):
-    # seek into ct, decrypt, reencrypt with different plaintext
-    # exposed to attackers by API call that doesnt reveal key or original pt
-    # attacker as ct and controls offset adn new text
-    # recover original pt
-    pass
+import base64
+from cryptopals_functions import MT19937
+import random
+
+
+class CTREditOracle:
+    def __init__(self, seed: int):
+        self.seed = seed
+        self.pt = self.get_pt()
+        self.keystream = self.keystream_generator()
+
+    def get_pt(self):
+        with open("c25.txt", "r") as f:
+            return base64.b64decode(f.read())
+
+    def keystream_generator(self):
+        pt_len = len(self.pt)
+        gen = MT19937(self.seed)
+        return [
+            byte
+            for _ in range(pt_len // 4 + 1)
+            for byte in bytearray(gen.extract_numbers().to_bytes(4, byteorder="little"))
+        ]
+
+    def encrypt_CTR(self):
+        return bytes([k ^ p for k, p in zip(self.keystream, self.pt)])
+
+    def edit(self, ct, offset, newtext):
+        # seek into ct, decrypt, reencrypt with different plaintext
+        # exposed to attackers by API call that doesnt reveal key or original pt
+        # attacker as ct and controls offset adn new text
+        # recover original pt
+        pass
+
+
+seed = random.randint(0, 2**16)
+oracle = CTREditOracle(seed)
+ct = oracle.encrypt_CTR()
+
+"""
+ct[0] = pt[0] ^ ks[0]
+edit: offset = 0
+   new_ct[0] = new_pt[0] ^ks[0]
+
+"""

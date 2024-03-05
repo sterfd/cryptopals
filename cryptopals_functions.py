@@ -262,3 +262,55 @@ def validate_pkcs_padding(plaintext: bytes, blocksize: int) -> bytes:
     except PaddingError:
         # print("Invalid PKCS#7 padding error.")
         return
+
+
+# PRNGS
+class MT19937:
+    w, n, m, r = 32, 624, 397, 31
+    a = 0x9908B0DF
+    u, d = 11, 0xFFFFFFFF
+    s, b = 7, 0x9D2C5680
+    t, c = 15, 0xEFC60000
+    l, f = 18, 1812433253
+    wmask = (1 << w) - 1
+    lower_mask = (1 << r) - 1
+    upper_mask = 1 << r
+
+    def __init__(self, seed=5489):
+        self.idx = self.n
+        self.MT = [0] * self.n
+        self.MT[0] = seed
+        for i in range(1, self.n):
+            self.MT[i] = self.wmask & (
+                self.f * (self.MT[i - 1] ^ (self.MT[i - 1] >> (self.w - 2))) + i
+            )
+
+    def new_seed(self, seed):
+        self.idx = self.n
+        self.MT = [0] * self.n
+        self.MT[0] = seed
+        for i in range(1, self.n):
+            self.MT[i] = self.wmask & (
+                self.f * (self.MT[i - 1] ^ (self.MT[i - 1] >> (self.w - 2))) + i
+            )
+
+    def twist(self):
+        for i in range(self.n):
+            x = (self.MT[i] & self.upper_mask) | (
+                self.MT[(i + 1) % self.n] & self.lower_mask
+            )
+            xA = x >> 1
+            xA = xA ^ self.a if (x % 2 != 0) else xA
+            self.MT[i] = self.MT[(i + self.m) % self.n] ^ xA
+        self.idx = 0
+
+    def extract_numbers(self):
+        if self.idx >= self.n:
+            self.twist()
+        y = self.MT[self.idx]
+        y = y ^ ((y >> self.u) & self.d)
+        y = y ^ ((y << self.s) & self.b)
+        y = y ^ ((y << self.t) & self.c)
+        y = y ^ (y >> self.l)
+        self.idx += 1
+        return y & self.wmask
