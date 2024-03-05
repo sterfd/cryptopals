@@ -49,22 +49,6 @@ def untemper(rnd):
     return rnd
 
 
-def print_values(variables):
-    max_name_length = max(len(name) for name in variables.keys())
-    format_string = f"{{:<{max_name_length}}} | {{:>12}} | {{:>40}} | {{:>5}}| {{:>5}}"
-    print(format_string.format("Variable", "Base 10", "Binary", "Bin1s", "BinLen"))
-    for name, value in variables.items():
-        print(
-            format_string.format(
-                name,
-                value,
-                bin(value),
-                bin(value).count("1"),
-                len(bin(value)) - 2,
-            )
-        )
-
-
 def clone_RNG():
     gen = MT19937(123)
     rnds = []
@@ -81,6 +65,23 @@ def clone_RNG():
 
 
 clone_RNG()
+
+
+def print_values(variables):
+    max_name_length = max(len(name) for name in variables.keys())
+    format_string = f"{{:<{max_name_length}}} | {{:>12}} | {{:>40}} | {{:>5}}| {{:>5}}"
+    print(format_string.format("Variable", "Base 10", "Binary", "Bin1s", "BinLen"))
+    for name, value in variables.items():
+        print(
+            format_string.format(
+                name,
+                value,
+                bin(value),
+                bin(value).count("1"),
+                len(bin(value)) - 2,
+            )
+        )
+
 
 # mask = 0xFFFFFFFF
 # test_vals = [204, 22372, 223721, 22372134, 2237213405, (1 << 32) - 1]

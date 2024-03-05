@@ -55,14 +55,3 @@ def message_fun():
 
 def password_token():
     pass
-
-
-first_num = 2357136044
-x = MT19937(0)
-for i in range(1, 2**20000):
-    if i % 100000 == 0:
-        print("seed", i)
-    x.new_seed(i)
-    if x.extract_numbers() == first_num:
-        print("seed", i, "gives a repeat of first number")
-        break
