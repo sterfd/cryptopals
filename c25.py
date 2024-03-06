@@ -19,47 +19,45 @@
 
 
 import base64
-from cryptopals_functions import MT19937
 import random
+from cryptopals_functions import encrypt_CTR, decrypt_CBC
+from Crypto.Cipher import AES
 
 
 class CTREditOracle:
-    def __init__(self, seed: int):
-        self.seed = seed
+    def __init__(self):
         self.pt = self.get_pt()
-        self.keystream = self.keystream_generator()
+        self.key = random.randbytes(16)
+        self.keystream = self.generate_keystream()
 
     def get_pt(self):
-        with open("c25.txt", "r") as f:
-            return base64.b64decode(f.read())
+        with open("c10.txt", "r") as f:
+            ct = base64.b64decode(f.read())
+            return decrypt_CBC(ct, bytes(16), b"YELLOW SUBMARINE")
 
-    def keystream_generator(self):
-        pt_len = len(self.pt)
-        gen = MT19937(self.seed)
-        return [
-            byte
-            for _ in range(pt_len // 4 + 1)
-            for byte in bytearray(gen.extract_numbers().to_bytes(4, byteorder="little"))
-        ]
+    def generate_keystream(self):
+        cipher = AES.new(self.key, AES.MODE_ECB)
+        nonce = 0
+        keystream = b""
+        for block in range((len(self.pt) // 16) + 1):
+            counter = nonce.to_bytes(
+                length=16 // 2, byteorder="little"
+            ) + block.to_bytes(length=16 // 2, byteorder="little")
+            keystream += cipher.encrypt(counter)
+        return keystream
 
-    def encrypt_CTR(self):
-        return bytes([k ^ p for k, p in zip(self.keystream, self.pt)])
+    def get_ct(self):
+        return encrypt_CTR(self.pt, 0, self.key)
 
     def edit(self, ct, offset, newtext):
-        # seek into ct, decrypt, reencrypt with different plaintext
-        # exposed to attackers by API call that doesnt reveal key or original pt
-        # attacker as ct and controls offset adn new text
-        # recover original pt
-        pass
+        ct = bytearray(ct)
+        for i, b in enumerate(newtext):
+            ct[offset + i] = self.keystream[offset + i] ^ b
+        return bytes(ct)
 
 
-seed = random.randint(0, 2**16)
-oracle = CTREditOracle(seed)
-ct = oracle.encrypt_CTR()
-
-"""
-ct[0] = pt[0] ^ ks[0]
-edit: offset = 0
-   new_ct[0] = new_pt[0] ^ks[0]
-
-"""
+oracle = CTREditOracle()
+ct = oracle.get_ct()
+keystream = oracle.edit(ct, 0, bytes(len(ct)))
+plaintext = bytes([c ^ k for c, k in zip(ct, keystream)])
+print(plaintext)

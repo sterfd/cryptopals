@@ -264,6 +264,31 @@ def validate_pkcs_padding(plaintext: bytes, blocksize: int) -> bytes:
         return
 
 
+# CTR Mode
+def decrypt_CTR(ct: bytes, nonce: int, key: bytes):
+    pt = b""
+    bs = len(key)
+    for block in range(len(ct) // bs + 1):
+        counter = nonce.to_bytes(length=bs // 2, byteorder="little") + block.to_bytes(
+            length=bs // 2, byteorder="little"
+        )
+        keystream = encrypt_AES_ECB(counter, key)
+        pt += bytes(k ^ c for k, c in zip(keystream, ct[block * bs : (block + 1) * bs]))
+    return pt
+
+
+def encrypt_CTR(pt: bytes, nonce: int, key: bytes):
+    ct = b""
+    bs = len(key)
+    for block in range(len(pt) // bs + 1):
+        counter = nonce.to_bytes(length=bs // 2, byteorder="little") + block.to_bytes(
+            length=bs // 2, byteorder="little"
+        )
+        keystream = encrypt_AES_ECB(counter, key)
+        ct += bytes(k ^ p for k, p in zip(keystream, pt[block * 16 : (block + 1) * 16]))
+    return ct
+
+
 # PRNGS
 class MT19937:
     w, n, m, r = 32, 624, 397, 31

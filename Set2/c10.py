@@ -72,7 +72,7 @@ def CBC_decryption(message, iv, key):
     return b"".join(plaintext)
 
 
-def CBC_decryption_AAO(message, iv, key):
+def CBC_decryption_AAO(message, iv, key):  # all at once
     bs = len(iv)
     blocks_b = [iv] + [
         message[bs * i : (bs * (i + 1))] for i in range(len(message) // bs)
