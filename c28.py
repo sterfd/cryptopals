@@ -16,81 +16,73 @@ and that you can't produce a new MAC without knowing the secret key.
 what is SHA - secure hashing algo
 what is MAC - message authentication code - aka authentication tag
 
-
 SHA-1 - 160 bit hash function resembling MD5
 """
+import base64
 
 
-class SHA1:
+def SHA1(message: bytes) -> int:
+    def lrotate(bits, amount):
+        return ((bits << amount) | (bits >> (32 - amount))) & 0xFFFFFFFF
+
+    def fk(i, b, c, d):
+        if i < 20:
+            f = (b & c) | (~b & d)
+            k = 0x5A827999
+        elif i < 40 or i >= 60:
+            f = b ^ c ^ d
+            k = 0x6ED9EBA1 if i < 40 else 0xCA62C1D6
+        else:
+            f = (b & c) | (b & d) | (c & d)
+            k = 0x8F1BBCDC
+        return f, k
+
     h0 = 0x67452301
     h1 = 0xEFCDAB89
     h2 = 0x98BADCFE
     h3 = 0x10325476
     h4 = 0xC3D2E1F0
+    mask = 0xFFFFFFFF
 
-    # all vars are unsigned 32-bit quantities - wrap modulo 2**32 wehn calc
-    # except
-    #       ml - message len, 64-bit quantity
-    #       hh - message digest, 160-bit quantity
-    # all constants are big endian - most significant byte stored left
+    # preprocess
+    add_zeros = (119 - (len(message) % 64)) % 64
+    message += (
+        bytes([128])
+        + bytes(add_zeros)
+        + (len(message) * 8).to_bytes(8, byteorder="big")
+    )
 
-    def __init__(self, message: bytes):
-        self.message = bytearray(message)
+    # split into 64 byte chunks
+    for chunk_idx in range(len(message) // 64):
+        chunk = message[chunk_idx * 64 : (chunk_idx + 1) * 64]
+        word_bytes = [chunk[i * 4 : (i + 1) * 4] for i in range(16)]
+        words = [int.from_bytes(x, byteorder="big") for x in word_bytes]
 
-    def preprocess(self):
-        # add an x byte to the message, then 0 bytes until ml is 56 mod 64, then ml (8 bytes)
-        self.message += bytes([128])
-        add_zeros = (56 - (len(self.message) % 64) + 64) % 64
-        self.message += bytes(add_zeros)
-        self.message += len(self.message).to_bytes(8, byteorder="big")
+        for i in range(16, 80):  # expand each block of 16 bytes to 80
+            w_i = words[i - 3] ^ words[i - 8] ^ words[i - 16] ^ words[i - 14]
+            words.append(lrotate(w_i, 1))
 
-    def left_rotate(self, chunk):
-        pass
+        a, b, c, d, e = h0, h1, h2, h3, h4
+        for i in range(80):
+            f, k = fk(i, b, c, d)
+            temp = lrotate(a, 5) + f + e + k + words[i] & mask
+            e, d = d, c
+            c = lrotate(b, 30)
+            b, a = a, temp
 
-    def chunky_time(self):  # break into 64-byte chunks
-        """
-        Process the message in successive 512-bit/64-byte chunks:
-        break message into 512-bit/64-byte chunks
-        for each chunk
-            break chunk into sixteen 32-bit/8-byte big-endian words w[i], 0 ≤ i ≤ 15
+        h0 = (h0 + a) & mask
+        h1 = (h1 + b) & mask
+        h2 = (h2 + c) & mask
+        h3 = (h3 + d) & mask
+        h4 = (h4 + e) & mask
 
-            Message schedule: extend the sixteen 32-bit/8-byte words into eighty 32-bit words:
-            for i from 16 to 79
-                Note 3: SHA-0 differs by not having this leftrotate.
-                w[i] = (w[i-3] xor w[i-8] xor w[i-14] xor w[i-16]) leftrotate 1"""
-        pass
-
-
-def print_values(variables):
-    max_name_length = max(len(name) for name in variables.keys())
-    format_string = f"{{:<{max_name_length}}} | {{:>12}} | {{:>40}} | {{:>5}}| {{:>5}}"
-    print(format_string.format("Variable", "Base 10", "Binary", "Bin1s", "BinLen"))
-
-    for name, value in variables.items():
-        print(
-            format_string.format(
-                name,
-                value,
-                bin(value),
-                bin(value).count("1"),
-                len(bin(value)) - 2,
-            )
-        )
+    return (h0 << 128) | (h1 << 96) | (h2 << 64) | (h3 << 32) | h4
 
 
-x = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0]
-hexvals = {f"hexval {i}": a for i, a in enumerate(x)}
-# print_values(hexvals)
-
-
-message = b"heyy how are you my name is stephanie. i am really hungry"
-# print("message len", len(message), bin(len(message)))
-# print(bin((len(message)) << 5))
-# print(0x80, bin(0x80), hex(0x80), bytes([128]))
-
+message = b""
 x = SHA1(message)
-x.preprocess()
 
-# print(len(message))
-# message += bytes([128])
-# print(len(message))
+print(
+    base64.b64encode(bytes.fromhex(hex(x)[2:])),
+    hex(x),
+)
