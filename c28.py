@@ -79,10 +79,10 @@ def SHA1(message: bytes) -> int:
     return (h0 << 128) | (h1 << 96) | (h2 << 64) | (h3 << 32) | h4
 
 
-message = b""
-x = SHA1(message)
+# message = b"The lazy fox jumps over the lazy brown dog"
+# x = SHA1(message)
 
-print(
-    base64.b64encode(bytes.fromhex(hex(x)[2:])),
-    hex(x),
-)
+# print(
+#     base64.b64encode(bytes.fromhex(hex(x)[2:])),
+#     hex(x),
+# )
