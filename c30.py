@@ -16,7 +16,6 @@ Second verse, same as the first, but use MD4 instead of SHA-1.
 
 
 def MD4(msg):
-
     def lrotate(bits, amount):
         return ((bits << amount) | (bits >> (32 - amount))) & mask
 
@@ -75,16 +74,19 @@ def MD4(msg):
     B = 0x89ABCDEF
     C = 0xFEDCBA98
     D = 0x766543210
+
     rA = 0x67452301
     rB = 0xEFCDAB89
     rC = 0x98BADCFE
     rD = 0x10325476
     mask = 0xFFFFFFFF
 
+    # preprocess and padding
     add_zeros = (119 - (len(msg) % 64)) % 64
     msg += (
         bytes([128]) + bytes(add_zeros) + (len(msg) * 8).to_bytes(8, byteorder="little")
     )
+    # print(msg, int.from_bytes(msg, byteorder="little"))
 
     for chunk_idx in range(len(msg) // 64):
         chunk = msg[chunk_idx * 64 : (chunk_idx + 1) * 64]
@@ -98,9 +100,9 @@ def MD4(msg):
         rA, rB, rC, rD = round1(rA, rB, rC, rD)
         print("round1", rA, rB, rC, rD)
         rA, rB, rC, rD = round2(rA, rB, rC, rD)
-        print("round2", rA, rB, rC, rD)
+        # print("round2", rA, rB, rC, rD)
         rA, rB, rC, rD = round3(rA, rB, rC, rD)
-        print("round3", rA, rB, rC, rD)
+        # print("round3", rA, rB, rC, rD)
         rA = (rA + AA) & mask
         rB = (rB + BB) & mask
         rC = (rC + CC) & mask
@@ -126,5 +128,5 @@ hashes = [
 #     hash = MD4(m)
 #     print(hex(hash))
 
-hash = MD4(b"hehehe")
+hash = MD4(b"a")
 print(hex(hash))
