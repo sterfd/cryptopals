@@ -39,6 +39,10 @@ This is very easy to do in Python or Ruby or other high-level languages that aut
 Note that you'll need to write your own modexp (this is blackboard math, don't freak out), 
     because you'll blow out your bignum library raising "a" to the 1024-bit-numberth power. 
     You can find modexp routines on Rosetta Code for most languages.
-    
 
 """
+import random
+
+p, g = 37, 5
+rand = random.randint(1, 37) % 37
+a = (g**rand) % p
