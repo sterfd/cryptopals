@@ -44,5 +44,6 @@ Note that you'll need to write your own modexp (this is blackboard math, don't f
 import random
 
 p, g = 37, 5
-rand = random.randint(1, 37) % 37
-a = (g**rand) % p
+rand_a, rand_b = random.randint(1, 37) % 37, random.randint(1, 37) % 37
+a = (g**rand_a) % p
+b = (g**rand_b) % p
