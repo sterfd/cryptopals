@@ -43,7 +43,34 @@ Note that you'll need to write your own modexp (this is blackboard math, don't f
 """
 import random
 
-p, g = 37, 5
-rand_a, rand_b = random.randint(1, 37) % 37, random.randint(1, 37) % 37
-a = (g**rand_a) % p
-b = (g**rand_b) % p
+
+def modexp(b, e, m):
+    if m == 1:
+        return 0
+    c = 1
+    b = b % m
+    while e > 0:
+        if e % 2 == 1:
+            c = (c * b) % m
+        e = e >> 1
+        b = (b**2) % m
+    return c
+
+
+p = """ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024
+e088a67cc74020bbea63b139b22514a08798e3404ddef9519b3cd
+3a431b302b0a6df25f14374fe1356d6d51c245e485b576625e7ec
+6f44c42e9a637ed6b0bff5cb6f406b7edee386bfb5a899fa5ae9f
+24117c4b1fe649286651ece45b3dc2007cb8a163bf0598da48361
+c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552
+bb9ed529077096966d670c354e4abc9804f1746c08ca237327fff
+fffffffffffff"""
+p = int(p.replace("\n", ""), base=16)
+g = 2
+s_a, s_b = random.randint(0, p - 1), random.randint(0, p - 1)
+A = modexp(g, s_a, p)
+B = modexp(g, s_b, p)
+s = modexp(B, s_a, p)
+s2 = modexp(A, s_b, p)
+
+print(s == s2, s, s2)
