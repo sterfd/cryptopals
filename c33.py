@@ -73,4 +73,4 @@ B = modexp(g, s_b, p)
 s = modexp(B, s_a, p)
 s2 = modexp(A, s_b, p)
 
-print(s == s2, s, s2)
+# print(s == sd2, s, s2)

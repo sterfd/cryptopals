@@ -224,7 +224,7 @@ def decrypt_CBC(message: bytes, iv: bytes, key: bytes) -> bytes:
         xored = bytes(b1 ^ b2 for b1, b2 in zip(dec_block, prev))
         plaintext.append(xored)
         prev = block
-    return b"".join(plaintext)
+    return validate_pkcs_padding(b"".join(plaintext), 16)
 
 
 def encryption_oracle_ECB_CBC(message, key_len):
@@ -254,13 +254,14 @@ class PaddingError(Exception):
 def validate_pkcs_padding(plaintext: bytes, blocksize: int) -> bytes:
     try:
         if len(plaintext) % blocksize != 0:
+            print("len of msg error")
             raise PaddingError
         len_padding = plaintext[-1]
         if len(set([byte for byte in plaintext[-len_padding:]])) != 1:
             raise PaddingError
         return plaintext[:-len_padding]
     except PaddingError:
-        # print("Invalid PKCS#7 padding error.")
+        print("Invalid PKCS#7 padding error.")
         return
 
 
