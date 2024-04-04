@@ -107,7 +107,9 @@ class Recipient:
     def receive_message(self, encrypted_msg, iv):
         s_int = modexp(self.partner_pk, self.secret_key, self.P)
         shared_secret = s_int.to_bytes((s_int.bit_length() + 7) // 8, "big")[:16]
-        AES_key = bytes.fromhex(hex(SHA1(shared_secret))[2:])[:16]
+        hashed_ss = SHA1(shared_secret)
+        AES_key = hashed_ss.to_bytes((hashed_ss.bit_length() + 7) // 8, "big")[:16]
+        # AES_key = bytes.fromhex(hex(SHA1(shared_secret))[2:])[:16]
         dec_msg = decrypt_CBC(encrypted_msg, iv, AES_key)
         new_iv = random.randbytes(16)
         return encrypt_CBC(dec_msg, iv=new_iv, key=AES_key), new_iv
@@ -148,4 +150,4 @@ def MITM():
 
 
 # bob_talk_to_alice()
-MITM()
+# MITM()
