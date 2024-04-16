@@ -66,6 +66,8 @@ c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552
 bb9ed529077096966d670c354e4abc9804f1746c08ca237327fff
 fffffffffffff"""
 p = int(p.replace("\n", ""), base=16)
+
+print(p)
 g = 2
 s_a, s_b = random.randint(0, p - 1), random.randint(0, p - 1)
 A = modexp(g, s_a, p)
