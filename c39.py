@@ -33,34 +33,54 @@ Finally, to encrypt a string, do something cheesy, like convert the string to he
     on the front of it to turn it into a number. The math cares not how stupidly you feed it strings.
 
 """
+import math
 import random
-from egcd import egcd
-from Crypto.Util.number import getPrime, getRandomInteger
+from Crypto.Util.number import getPrime
 
 
-def generate_prime_set(upper_limit):
-    nums = set(range(2, upper_limit))
-    composite = set()
+def invmod(a, b):
+    r1, r2 = max(a, b), min(a, b)
+    s1, s2, t1, t2 = 1, 0, 0, 1
 
-    for i in range(2, upper_limit):
-        for x in range(2, upper_limit // i + 1):
-            composite.add(i * x)
+    while r2 > 0:
+        q = r1 // r2
+        r1, r2 = r2, r1 % r2
+        s1, s2 = s2, s1 - q * s2
+        t1, t2 = t2, t1 - q * t2
+    return t1 if t1 > 0 else t1 + max(a, b)
 
-    primes = nums - composite
-    return list(primes)
+
+class RSA:
+    def __init__(self):
+        self.e = et = 3
+
+        while math.gcd(self.e, et) > 1:
+            p = getPrime(1024)
+            q = getPrime(1024)
+            self.n = p * q
+            et = (p - 1) * (q - 1)
+
+        self.d = invmod(self.e, et)
+
+    def encrypt(self, m):
+        return pow(base=m, exp=self.e, mod=self.n)
+
+    def decrypt(self, c):
+        return pow(base=c, exp=self.d, mod=self.n)
 
 
-x = getPrime(16)
+def str_to_num(message):
+    m_hex = "0x" + message.encode("utf-8").hex()
+    return int(m_hex, base=16)
 
-print(x)
 
-primes = generate_prime_set(10**5)
-p = random.choice(primes)
-q = random.choice(primes)
-assert p != q
-n = p * q
-et = (p - 1) * (q - 1)
-e = 3
-_, d, _ = egcd(e, et)
-d = d + et if d < 0 else d
-print(f"{p =}, {q = }, {n = }, {et = }, {egcd(e, et) = }")
+def num_to_str(num):
+    return bytes.fromhex(hex(num).strip("L").strip("0x"))
+
+
+blah = RSA()
+with open("secrets.txt", "r") as f:
+    lines = f.readlines()
+    cipher_text = blah.encrypt(str_to_num(random.choice(lines)))
+pt_int = blah.decrypt(cipher_text)
+print(num_to_str(pt_int))
