@@ -63,15 +63,14 @@ class RSA:
         self.d = invmod(self.e, et)
 
     def encrypt(self, m):
-        return pow(base=m, exp=self.e, mod=self.n)
+        return self.d, pow(base=m, exp=self.e, mod=self.n)
 
     def decrypt(self, c):
         return pow(base=c, exp=self.d, mod=self.n)
 
 
 def str_to_num(message):
-    m_hex = "0x" + message.encode("utf-8").hex()
-    return int(m_hex, base=16)
+    return int(f'0x{message.encode("utf-8").hex()}', base=16)
 
 
 def num_to_str(num):
@@ -81,6 +80,6 @@ def num_to_str(num):
 blah = RSA()
 with open("secrets.txt", "r") as f:
     lines = f.readlines()
-    cipher_text = blah.encrypt(str_to_num(random.choice(lines)))
+    public_key, cipher_text = blah.encrypt(str_to_num(random.choice(lines)))
 pt_int = blah.decrypt(cipher_text)
 print(num_to_str(pt_int))
